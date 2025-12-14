@@ -38,7 +38,7 @@ GEMINI_URL = "https://gemini.google.com/app"
 BROWSER_TYPE = "chromium"  # 浏览器类型: "chrome" (系统Chrome) 或 "chromium" (Playwright Chromium)
 USE_SYSTEM_CHROME = True  # 是否使用系统安装的Chrome (True) 还是Playwright Chromium (False)
 HEADLESS = True  # 是否无头模式（True = 不显示浏览器窗口）
-TIMEOUT = 60000  # 浏览器操作超时时间（毫秒）
+TIMEOUT = 20000  # 浏览器操作超时时间（毫秒）
 
 # 响应等待配置
 RESPONSE_TIMEOUT = 1200  # 响应等待超时时间（秒），默认20分钟
@@ -47,6 +47,7 @@ RESPONSE_TIMEOUT = 1200  # 响应等待超时时间（秒），默认20分钟
 DEBUG = True  # 启用调试模式以诊断问题
 
 # 模型配置
+SKIP_MODEL_SELECTION = False  # 跳过模型选择，直接使用当前页面的默认模型（大幅提速）
 AVAILABLE_MODELS = {
     "gemini-pro": {
         "name": "思考",

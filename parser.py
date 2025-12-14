@@ -78,8 +78,8 @@ class GeminiResponseParser:
                 
                 # 如果是纯数字，跳过（这是长度标记）
                 if line.isdigit():
-                    if config.DEBUG:
-                        print(f"   行 {i}: 跳过长度标记 {line}")
+                    # if config.DEBUG:
+                    #     print(f"   行 {i}: 跳过长度标记 {line}")
                     i += 1
                     continue
                 
@@ -103,8 +103,8 @@ class GeminiResponseParser:
                         i += 1
                         continue
                     
-                    if config.DEBUG:
-                        print(f"   行 {i}: [OK] 找到 wrb.fr 数据")
+                    # if config.DEBUG:
+                    #     print(f"   行 {i}: [OK] 找到 wrb.fr 数据")
                     
                     # 提取内层JSON字符串（第二层解析）
                     inner_json_str = middle_data[2]
@@ -115,24 +115,24 @@ class GeminiResponseParser:
                     # 解析内层JSON
                     inner_data = json.loads(inner_json_str)
                     
-                    if config.DEBUG:
-                        print(f"   内层数据类型: {type(inner_data)}, 长度: {len(inner_data) if isinstance(inner_data, list) else 'N/A'}")
+                    # if config.DEBUG:
+                    #     print(f"   内层数据类型: {type(inner_data)}, 长度: {len(inner_data) if isinstance(inner_data, list) else 'N/A'}")
                     
                     # 提取文本内容（第三层）- 返回结构化数据
                     extracted_data = self._extract_text_from_data(inner_data)
                     if extracted_data:
                         last_valid_text = extracted_data
-                        if config.DEBUG:
-                            if isinstance(extracted_data, dict):
-                                thinking = extracted_data.get('thinking', '')
-                                content = extracted_data.get('content', '')
-                                print(f"   [OK] 提取到数据:")
-                                if thinking:
-                                    print(f"      思维链 ({len(thinking)} 字符): {thinking[:50]}...")
-                                if content:
-                                    print(f"      正文 ({len(content)} 字符): {content[:50]}...")
-                            else:
-                                print(f"   [OK] 提取到文本 ({len(str(extracted_data))} 字符): {str(extracted_data)[:50]}...")
+                        # if config.DEBUG:
+                        #     if isinstance(extracted_data, dict):
+                        #         thinking = extracted_data.get('thinking', '')
+                        #         content = extracted_data.get('content', '')
+                        #         print(f"   [OK] 提取到数据:")
+                        #         if thinking:
+                        #             print(f"      思维链 ({len(thinking)} 字符): {thinking[:50]}...")
+                        #         if content:
+                        #             print(f"      正文 ({len(content)} 字符): {content[:50]}...")
+                        #     else:
+                        #       print(f"   [OK] 提取到文本 ({len(str(extracted_data))} 字符): {str(extracted_data)[:50]}...")
                     
                 except json.JSONDecodeError as e:
                     if config.DEBUG:

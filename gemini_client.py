@@ -210,84 +210,96 @@ class GeminiClient:
                         print(f"⚠️  响应处理错误: {e}")
         
         self.page.on("response", handle_response)
+
+
     async def _select_model(self, page: Page, model: str):
         """
-        在Gemini页面中选择模型
+        在Gemini页面中选择模型 - 使用JavaScript避免超时
 
         Args:
             page: Playwright页面对象
             model: 模型名称 ("gemini-pro" 或 "gemini-flash")
         """
         try:
+            # 检查是否跳过模型选择
+            if getattr(config, 'SKIP_MODEL_SELECTION', False):
+                print(f"⚡ 跳过模型选择（使用页面默认模型）")
+                return
+
             print(f"🎯 选择模型: {model}")
 
             # 验证模型是否有效
             if model not in config.AVAILABLE_MODELS:
                 print(f"⚠️  未知模型 {model}，使用默认模型 {config.DEFAULT_MODEL}")
-                model = config.DEFAULT_MODEL
+                return
 
             model_info = config.AVAILABLE_MODELS[model]
             target_text = model_info["selector_text"]
 
-            # 步骤1: 点击模型选择按钮（触发下拉菜单）
-            button_selectors = [
-                'div[data-test-id="bard-mode-menu-button"]',
-                'div[role="button"][data-test-id="bard-mode-menu-button"]',
-                'button.input-area-switch:has-text("思考")',
-                'button.input-area-switch:has-text("快速")',
-                'div.pill-ui-logo-container',
-            ]
+            # 使用JavaScript直接操作，完全避免Playwright选择器
+            script = """
+            async (targetText) => {
+                // 步骤1: 查找并点击模型选择按钮
+                const buttonSelectors = [
+                    '[data-test-id="bard-mode-menu-button"]',
+                    '[role="button"][data-test-id="bard-mode-menu-button"]',
+                    '.input-area-switch',
+                    '.pill-ui-logo-container'
+                ];
 
-            button_clicked = False
-            for selector in button_selectors:
-                try:
-                    # 减少超时时间到500ms
-                    button = await page.wait_for_selector(selector, timeout=500, state='visible')
-                    if button:
-                        await button.click()
-                        print(f"✅ 点击了模型选择按钮: {selector}")
-                        button_clicked = True
-                        break
-                except Exception as e:
-                    if config.DEBUG:
-                        print(f"   尝试选择器 {selector} 失败: {e}")
-                    continue
+                let buttonClicked = false;
+                for (const selector of buttonSelectors) {
+                    const button = document.querySelector(selector);
+                    if (button && button.offsetParent !== null) {
+                        button.click();
+                        buttonClicked = true;
+                        break;
+                    }
+                }
 
-            if not button_clicked:
+                if (!buttonClicked) {
+                    return { buttonFound: false, optionFound: false };
+                }
+
+                // 等待菜单出现
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // 步骤2: 查找并点击包含目标文本的选项
+                const allButtons = document.querySelectorAll('button');
+                for (const button of allButtons) {
+                    const text = button.textContent || '';
+                    if (text.includes(targetText)) {
+                        // 检查是否是菜单选项
+                        const testId = button.getAttribute('data-test-id') || '';
+                        const className = button.className || '';
+
+                        if (testId.includes('option') ||
+                            className.includes('option') ||
+                            className.includes('menu-item') ||
+                            button.closest('[role="menu"]')) {
+                            button.click();
+                            return { buttonFound: true, optionFound: true };
+                        }
+                    }
+                }
+
+                // 如果没找到选项，点击空白处关闭菜单
+                document.body.click();
+                return { buttonFound: true, optionFound: false };
+            }
+            """
+
+            result = await page.evaluate(script, target_text)
+
+            if not result['buttonFound']:
                 print("⚠️  未找到模型选择按钮，使用当前默认模型")
-                return
-
-            # 步骤2: 等待下拉菜单出现（缩短等待时间）
-            await asyncio.sleep(0.3)
-            print(f"select {target_text} ")
-            # 步骤3: 根据model参数点击对应的选项
-            option_selectors = [
-                f'button[data-test-id="bard-mode-option-{target_text}"]',
-                f'button:has-text("{target_text}")',
-                f'button.bard-mode-list-button:has-text("{target_text}")',
-                f'button.mat-mdc-menu-item:has-text("{target_text}")',
-            ]
-
-            option_clicked = False
-            for selector in option_selectors:
-                try:
-                    # 减少超时时间到500ms
-                    option = await page.wait_for_selector(selector, timeout=500, state='visible')
-                    if option:
-                        await option.click()
-                        print(f"✅ 选择了模型: {target_text} ({model})")
-                        option_clicked = True
-                        break
-                except Exception as e:
-                    if config.DEBUG:
-                        print(f"   尝试选择器 {selector} 失败: {e}")
-                    continue
-
-            if not option_clicked:
+            elif result['optionFound']:
+                print(f"✅ 选择了模型: {target_text} ({model})")
+            else:
                 print(f"⚠️  未找到模型选项 '{target_text}'，使用当前默认模型")
 
-            # 等待选择生效（缩短等待时间）
-            await asyncio.sleep(0.2)
+            # 等待选择生效
+            await asyncio.sleep(0.1)
 
         except Exception as e:
             print(f"⚠️  模型选择失败: {e}")
@@ -998,8 +1010,7 @@ class GeminiClient:
         finally:
             # 在关闭标签页前尝试删除当前对话
             try:
-                print("🗑️  不删除本次对话...")
-                # await self._delete_current_conversation(new_page)
+                await self._delete_current_conversation(new_page)
             except Exception as e:
                 # 删除失败不影响后续操作
                 if config.DEBUG:
