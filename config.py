@@ -17,17 +17,26 @@ PORT = 5000
 if os.name == 'nt':  # Windows
     CHROME_USER_DATA = str(Path.home() / "AppData/Local/Google/Chrome/User Data")
 elif os.sys.platform == 'darwin':  # Mac
-    CHROME_USER_DATA = str(Path.home() / "Library/Application Support/Google/Chrome")
+    CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome"
 else:  # Linux
     CHROME_USER_DATA = str(Path.home() / ".config/google-chrome")
 
 # 如果需要自定义，取消注释下面这行
-# CHROME_USER_DATA = "/path/to/your/chrome/user/data"
+# 多Profile使用示例（指定特定Profile）：
+CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome/Profile 2"
+# 或使用默认Profile：
+# CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome/Default"
+
+# 可用的Profile列表：
+# - Default（默认Profile）
+# - Profile 1, Profile 2, Profile 3... （其他Profile）
 
 # Gemini 配置
 GEMINI_URL = "https://gemini.google.com/app"
 
 # 浏览器配置
+BROWSER_TYPE = "chromium"  # 浏览器类型: "chrome" (系统Chrome) 或 "chromium" (Playwright Chromium)
+USE_SYSTEM_CHROME = True  # 是否使用系统安装的Chrome (True) 还是Playwright Chromium (False)
 HEADLESS = True  # 是否无头模式（True = 不显示浏览器窗口）
 TIMEOUT = 60000  # 浏览器操作超时时间（毫秒）
 

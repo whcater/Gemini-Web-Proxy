@@ -219,3 +219,32 @@ A: 可以，但需要在服务器上安装图形界面或使用 Xvfb。
 ## 📞 联系方式
 
 有问题？欢迎提 Issue！
+
+
+
+
+---
+
+# 退出当前虚拟环境
+deactivate
+
+# 安装 Python 3.12
+brew install python@3.12
+
+# 删除旧的虚拟环境
+rm -rf venv
+
+# 使用 Python 3.12 创建新的虚拟环境
+/usr/local/opt/python@3.12/bin/python3.12 -m venv venv
+
+# 激活虚拟环境
+source venv/bin/activate
+
+# 确认 Python 版本
+python --version  # 应该显示 Python 3.12.x
+
+# 安装依赖
+pip install -r requirements.txt
+
+
+CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome"

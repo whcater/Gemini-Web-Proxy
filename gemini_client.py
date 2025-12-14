@@ -95,18 +95,28 @@ class GeminiClient:
         print(f"   用户数据目录: {config.CHROME_USER_DATA}")
         
         try:
-            # 使用用户的 Chrome 配置（保留登录态）
-            self.context = await self.playwright.chromium.launch_persistent_context(
-                user_data_dir=config.CHROME_USER_DATA,
-                headless=config.HEADLESS,
-                channel="chrome",  # 使用系统安装的 Chrome
-                args=[
+            # 准备浏览器启动参数
+            launch_kwargs = {
+                "user_data_dir": config.CHROME_USER_DATA,
+                "headless": config.HEADLESS,
+                "args": [
                     '--no-sandbox',
                     '--disable-blink-features=AutomationControlled',
                     '--disable-dev-shm-usage',
                 ],
-                # 移除硬编码的代理设置，使用系统网络设置（包括VPN）
-                timeout=config.TIMEOUT,
+                "timeout": config.TIMEOUT,
+            }
+            
+            # 根据配置选择使用系统Chrome还是Playwright Chromium
+            if config.USE_SYSTEM_CHROME:
+                launch_kwargs["channel"] = "chrome"  # 使用系统安装的 Chrome
+                print("   使用系统安装的 Chrome 浏览器")
+            else:
+                print("   使用 Playwright Chromium 浏览器")
+            
+            # 使用用户的 Chrome 配置（保留登录态）
+            self.context = await self.playwright.chromium.launch_persistent_context(
+                **launch_kwargs
             )
             
             # 创建新页面
@@ -231,7 +241,7 @@ class GeminiClient:
             button_clicked = False
             for selector in button_selectors:
                 try:
-                    button = await page.wait_for_selector(selector, timeout=3000, state='visible')
+                    button = await page.wait_for_selector(selector, timeout=1000, state='visible')
                     if button:
                         await button.click()
                         print(f"✅ 点击了模型选择按钮: {selector}")
@@ -248,7 +258,7 @@ class GeminiClient:
             
             # 步骤2: 等待下拉菜单出现
             await asyncio.sleep(1)
-            
+            print(f"select {target_text} ")
             # 步骤3: 根据model参数点击对应的选项
             option_selectors = [
                 f'button[data-test-id="bard-mode-option-{target_text}"]',
@@ -260,7 +270,7 @@ class GeminiClient:
             option_clicked = False
             for selector in option_selectors:
                 try:
-                    option = await page.wait_for_selector(selector, timeout=3000, state='visible')
+                    option = await page.wait_for_selector(selector, timeout=1000, state='visible')
                     if option:
                         await option.click()
                         print(f"✅ 选择了模型: {target_text} ({model})")
@@ -754,9 +764,8 @@ class GeminiClient:
                     async with response_lock:
                         response_chunks.append(text)
                     
-                    print(f"📥 收到响应块 ({len(text)} bytes)")
-                    if config.DEBUG:
-                        print(f"   内容预览: {text[:300]}...")
+                    print(f"📥 收到响应块 ({len(text)} bytes)") 
+                    print(f"   内容预览: {text[:300]}...")
                 except Exception as e:
                     # 忽略缓存清除错误，这是正常现象
                     if "evicted from inspector cache" in str(e):
@@ -980,7 +989,8 @@ class GeminiClient:
         finally:
             # 在关闭标签页前尝试删除当前对话
             try:
-                await self._delete_current_conversation(new_page)
+                print("🗑️  不删除本次对话...")
+                # await self._delete_current_conversation(new_page)
             except Exception as e:
                 # 删除失败不影响后续操作
                 if config.DEBUG:
