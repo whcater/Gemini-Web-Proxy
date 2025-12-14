@@ -23,7 +23,9 @@ else:  # Linux
 
 # 如果需要自定义，取消注释下面这行
 # 多Profile使用示例（指定特定Profile）：
-CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome/Profile 2"
+# CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome/Profile 2"
+# 使用专门的 Profile 来避免影响主 Profile
+CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome"
 # 或使用默认Profile：
 # CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome/Default"
 
@@ -37,7 +39,7 @@ GEMINI_URL = "https://gemini.google.com/app"
 # 浏览器配置
 BROWSER_TYPE = "chromium"  # 浏览器类型: "chrome" (系统Chrome) 或 "chromium" (Playwright Chromium)
 USE_SYSTEM_CHROME = True  # 是否使用系统安装的Chrome (True) 还是Playwright Chromium (False)
-HEADLESS = True  # 是否无头模式（True = 不显示浏览器窗口）
+HEADLESS = False  # 是否无头模式（False = 显示浏览器窗口，可以看到操作过程）
 TIMEOUT = 20000  # 浏览器操作超时时间（毫秒）
 
 # 响应等待配置

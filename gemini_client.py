@@ -95,14 +95,24 @@ class GeminiClient:
         print(f"   用户数据目录: {config.CHROME_USER_DATA}")
         
         try:
-            # 准备浏览器启动参数
+            # 准备浏览器启动参数 - 使用最少的必要参数
             launch_kwargs = {
                 "user_data_dir": config.CHROME_USER_DATA,
                 "headless": config.HEADLESS,
                 "args": [
-                    '--no-sandbox',
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
+                    # 只保留必要的参数
+                    '--no-first-run',
+                    '--no-default-browser-check',
+                    '--disable-popup-blocking',
+                    '--disable-translate',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
+                    '--disable-device-discovery-notifications',
+                    '--window-size=1280,720',
+                    '--start-maximized',
+                ],
+                "ignore_default_args": [
+                    "--enable-automation",  # 移除自动化标志
                 ],
                 "timeout": config.TIMEOUT,
             }
@@ -121,6 +131,17 @@ class GeminiClient:
             
             # 创建新页面
             self.page = await self.context.new_page()
+
+            # 注入隐藏自动化特征的脚本
+            await self.page.add_init_script("""
+                // 隐藏 webdriver 属性
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+
+                // 移除自动化相关的属性
+                delete navigator.__proto__.webdriver;
+            """)
             
             # 设置默认超时
             self.page.set_default_timeout(config.TIMEOUT)
@@ -1010,7 +1031,8 @@ class GeminiClient:
         finally:
             # 在关闭标签页前尝试删除当前对话
             try:
-                await self._delete_current_conversation(new_page)
+                print(f"🗑️ 不删除当前对话...")
+                # await self._delete_current_conversation(new_page)
             except Exception as e:
                 # 删除失败不影响后续操作
                 if config.DEBUG:
