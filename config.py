@@ -44,7 +44,7 @@ TIMEOUT = 60000  # 浏览器操作超时时间（毫秒）
 RESPONSE_TIMEOUT = 1200  # 响应等待超时时间（秒），默认20分钟
 
 # 调试模式
-DEBUG = False
+DEBUG = True  # 启用调试模式以诊断问题
 
 # 模型配置
 AVAILABLE_MODELS = {
@@ -67,6 +67,6 @@ THINKING_FORMAT = "reasoning_content"  # 可选值: "reasoning_content" (o1格�
 ENABLE_THINKING = True  # 是否启用思维链返回
 
 # DOM流式配置 ---- 实验性功能 谨慎使用 ----
-USE_DOM_STREAMING = True  # 流式模式是否使用DOM监听（True=真流式，False=假流式）
+USE_DOM_STREAMING = False  # 流式模式是否使用DOM监听（True=真流式，False=假流式）- 暂时关闭以解决响应问题
 DOM_POLL_INTERVAL = 0.2  # DOM轮询间隔（秒）
-DOM_STABLE_TIMEOUT = 20  # 文本不变化多少秒后判定完成（秒）
+DOM_STABLE_TIMEOUT = 2  # 文本不变化多少秒后判定完成（秒）- 缩短到2秒避免长时间等待

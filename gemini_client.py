@@ -213,22 +213,22 @@ class GeminiClient:
     async def _select_model(self, page: Page, model: str):
         """
         在Gemini页面中选择模型
-        
+
         Args:
             page: Playwright页面对象
             model: 模型名称 ("gemini-pro" 或 "gemini-flash")
         """
         try:
             print(f"🎯 选择模型: {model}")
-            
+
             # 验证模型是否有效
             if model not in config.AVAILABLE_MODELS:
                 print(f"⚠️  未知模型 {model}，使用默认模型 {config.DEFAULT_MODEL}")
                 model = config.DEFAULT_MODEL
-            
+
             model_info = config.AVAILABLE_MODELS[model]
             target_text = model_info["selector_text"]
-            
+
             # 步骤1: 点击模型选择按钮（触发下拉菜单）
             button_selectors = [
                 'div[data-test-id="bard-mode-menu-button"]',
@@ -237,11 +237,12 @@ class GeminiClient:
                 'button.input-area-switch:has-text("快速")',
                 'div.pill-ui-logo-container',
             ]
-            
+
             button_clicked = False
             for selector in button_selectors:
                 try:
-                    button = await page.wait_for_selector(selector, timeout=1000, state='visible')
+                    # 减少超时时间到500ms
+                    button = await page.wait_for_selector(selector, timeout=500, state='visible')
                     if button:
                         await button.click()
                         print(f"✅ 点击了模型选择按钮: {selector}")
@@ -251,13 +252,13 @@ class GeminiClient:
                     if config.DEBUG:
                         print(f"   尝试选择器 {selector} 失败: {e}")
                     continue
-            
+
             if not button_clicked:
                 print("⚠️  未找到模型选择按钮，使用当前默认模型")
                 return
-            
-            # 步骤2: 等待下拉菜单出现
-            await asyncio.sleep(1)
+
+            # 步骤2: 等待下拉菜单出现（缩短等待时间）
+            await asyncio.sleep(0.3)
             print(f"select {target_text} ")
             # 步骤3: 根据model参数点击对应的选项
             option_selectors = [
@@ -266,11 +267,12 @@ class GeminiClient:
                 f'button.bard-mode-list-button:has-text("{target_text}")',
                 f'button.mat-mdc-menu-item:has-text("{target_text}")',
             ]
-            
+
             option_clicked = False
             for selector in option_selectors:
                 try:
-                    option = await page.wait_for_selector(selector, timeout=1000, state='visible')
+                    # 减少超时时间到500ms
+                    option = await page.wait_for_selector(selector, timeout=500, state='visible')
                     if option:
                         await option.click()
                         print(f"✅ 选择了模型: {target_text} ({model})")
@@ -280,13 +282,13 @@ class GeminiClient:
                     if config.DEBUG:
                         print(f"   尝试选择器 {selector} 失败: {e}")
                     continue
-            
+
             if not option_clicked:
                 print(f"⚠️  未找到模型选项 '{target_text}'，使用当前默认模型")
-            
-            # 等待选择生效
-            await asyncio.sleep(0.5)
-            
+
+            # 等待选择生效（缩短等待时间）
+            await asyncio.sleep(0.2)
+
         except Exception as e:
             print(f"⚠️  模型选择失败: {e}")
             print("   将使用当前默认模型继续")
@@ -691,6 +693,13 @@ class GeminiClient:
                 # 方法1: 文本稳定一段时间
                 if stable_count >= max_stable_count:
                     print(f"✅ 文本已稳定 {config.DOM_STABLE_TIMEOUT} 秒，判定完成")
+                    # 输出最终数据摘要
+                    if current_thinking:
+                        print(f"   思维链: {len(current_thinking)} 字符")
+                    if current_content:
+                        print(f"   正文: {len(current_content)} 字符")
+                    if current_canvas:
+                        print(f"   Canvas: {len(current_canvas)} 字符")
                     # 返回最终数据
                     if not use_streaming:
                         yield {

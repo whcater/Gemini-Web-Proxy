@@ -3,3 +3,4 @@ playwright==1.40.0
 asyncio
 aiohttp==3.9.1
 html2text==2024.2.26
+requests==2.31.0

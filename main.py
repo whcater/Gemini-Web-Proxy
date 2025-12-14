@@ -126,10 +126,18 @@ def stream_response(messages: list, model: str = config.DEFAULT_MODEL):
             # 流式获取响应
             async for data_chunk in client.send_message(messages, model=model):
                 if data_chunk:
+                    # 调试：输出接收到的数据
+                    if config.DEBUG:
+                        print(f"[DEBUG] 收到数据块: {str(data_chunk)[:100]}...")
                     # 转换为 OpenAI 格式（支持结构化数据）
                     sse_data = parser.to_openai_format(data_chunk, model=model)
                     if sse_data:  # 只有非空数据才放入队列
+                        if config.DEBUG:
+                            print(f"[DEBUG] 转换后的SSE数据: {sse_data[:100]}...")
                         q.put(('data', sse_data))
+                    else:
+                        if config.DEBUG:
+                            print(f"[DEBUG] 转换返回空数据")
             
             # 发送完成标记
             q.put(('data', parser.to_openai_format("", is_done=True, model=model)))

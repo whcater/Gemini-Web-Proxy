@@ -8,10 +8,20 @@ from typing import Generator, Optional
 
 class GeminiResponseParser:
     """Gemini 响应解析器"""
-    
+
     def __init__(self):
         self.conversation_id = None
         self.response_id = None
+        # 用于跟踪上次发送的内容，实现增量输出
+        self.last_thinking = ""
+        self.last_content = ""
+        self.last_canvas = ""
+        # 用于标记思维链是否已完成（避免思维链和正文混淆）
+        self.thinking_completed = False
+        # 用于标记Canvas是否已开始（需要在结束时发送闭合标记）
+        self.canvas_started = False
+        # 用于标记Canvas是否已完成（避免思维链尾部混入Canvas）
+        self.canvas_completed = False
         
     def parse_stream_chunk(self, chunk: str) -> Optional[dict]:
         """
@@ -358,21 +368,7 @@ class GeminiResponseParser:
         
         extract_recursive(data)
         return texts
-    
-    def __init__(self):
-        self.conversation_id = None
-        self.response_id = None
-        # 用于跟踪上次发送的内容，实现增量输出
-        self.last_thinking = ""
-        self.last_content = ""
-        self.last_canvas = ""
-        # 用于标记思维链是否已完成（避免思维链和正文混淆）
-        self.thinking_completed = False
-        # 用于标记Canvas是否已开始（需要在结束时发送闭合标记）
-        self.canvas_started = False
-        # 用于标记Canvas是否已完成（避免思维链尾部混入Canvas）
-        self.canvas_completed = False
-    
+
     def to_openai_format(self, data_chunk, is_done: bool = False, model: str = "gemini-pro") -> str:
         """
         转换为 OpenAI SSE 格式
