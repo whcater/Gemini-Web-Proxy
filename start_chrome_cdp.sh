@@ -7,9 +7,20 @@ killall "Google Chrome" 2>/dev/null
 sleep 2
 
 # 创建临时用户数据目录（确保端口正确开启）
+GOOGLE_CHROME_DIR="/Users/ylp/Library/Application Support/Google/Chrome"
+ProfileName="Profile 4"
 TEMP_DIR="/tmp/chrome-cdp-profile"
-rm -rf $TEMP_DIR
-mkdir -p $TEMP_DIR
+
+# todo 如果 ${GOOGLE_CHROME_DIR}/${ProfileName} 已存在 就把${GOOGLE_CHROME_DIR}/${ProfileName}下的内容拷到 ${TEMP_DIR}/${ProfileName} 下
+# todo 如果 ${GOOGLE_CHROME_DIR}/${ProfileName} 已存在 就把${GOOGLE_CHROME_DIR}/${ProfileName}下的内容拷到 ${TEMP_DIR}/${ProfileName} 下
+mkdir -p "$TEMP_DIR/$ProfileName"
+if [ -d "${GOOGLE_CHROME_DIR}/${ProfileName}" ]; then
+    echo "拷贝现有Profile数据到临时目录..."
+    cp -r "${GOOGLE_CHROME_DIR}/${ProfileName}/." "$TEMP_DIR/$ProfileName/"
+fi
+
+# rm -rf $TEMP_DIR
+# mkdir -p $TEMP_DIR
 
 echo "启动 Chrome 并开启远程调试..."
 echo "使用临时Profile: $TEMP_DIR"
@@ -19,6 +30,7 @@ echo "使用临时Profile: $TEMP_DIR"
     --remote-debugging-port=9222 \
     --remote-debugging-address=127.0.0.1 \
     --user-data-dir="$TEMP_DIR" \
+    --profile-directory="$ProfileName" \
     --no-first-run \
     --no-default-browser-check \
     --disable-background-timer-throttling \

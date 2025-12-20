@@ -9,7 +9,7 @@ import time
 import threading
 from typing import AsyncGenerator
 import config
-from gemini_client_cdp import get_client
+from gemini_client_cdp_full import get_client
 from parser import GeminiResponseParser
 
 
