@@ -22,11 +22,12 @@ fi
 # rm -rf $TEMP_DIR
 # mkdir -p $TEMP_DIR
 
-echo "启动 Chrome 并开启远程调试..."
+echo "启动 Chrome 并开启远程调试（无痕模式）..."
 echo "使用临时Profile: $TEMP_DIR"
 
-# 启动Chrome - 使用临时Profile确保端口开启
+# 启动Chrome - 使用临时Profile确保端口开启（无痕模式）
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --incognito \
     --remote-debugging-port=9222 \
     --remote-debugging-address=127.0.0.1 \
     --user-data-dir="$TEMP_DIR" \
@@ -40,7 +41,7 @@ echo "使用临时Profile: $TEMP_DIR"
 
 sleep 2
 
-echo "Chrome 已启动"
+echo "Chrome 已启动（无痕模式）"
 echo "远程调试端口: 9222"
 echo "临时Profile: $TEMP_DIR"
 echo ""
@@ -51,10 +52,12 @@ sleep 1
 if curl -s http://127.0.0.1:9222/json/version > /dev/null 2>&1; then
     echo "✅ CDP端口已开启！"
     echo ""
-    echo "请在Chrome中："
+    echo "请在Chrome中（无痕模式）："
     echo "1. 登录 Google 账号"
     echo "2. 确保能访问 Gemini"
     echo "3. 然后运行: python main.py"
+    echo ""
+    echo "⚠️  注意: 无痕模式下登录信息不会被保存"
 else
     echo "❌ CDP端口未开启，请检查Chrome进程"
 fi

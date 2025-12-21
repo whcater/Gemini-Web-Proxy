@@ -76,6 +76,8 @@ def chat_completions():
         
         print(f"{'='*60}\n")
         
+        print(f"   full request body: {data}")
+
         if stream:
             # 流式响应
             return Response(
