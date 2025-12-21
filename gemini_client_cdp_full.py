@@ -4,11 +4,12 @@ Gemini 浏览器自动化客户端 - CDP完整版本
 """
 import asyncio
 import time
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, Dict, Any
 from playwright.async_api import async_playwright, Page, Browser, BrowserContext
 import config
 from parser import GeminiResponseParser
 import html2text
+from function_calling import FunctionCallingHandler
 
 
 class GeminiClientCDP:
@@ -29,17 +30,31 @@ class GeminiClientCDP:
         self.html_converter.ignore_links = False  # 保留链接
         self.html_converter.ignore_images = False  # 保留图片
         self.html_converter.ignore_emphasis = False  # 保留强调（加粗、斜体）
+        # Function Calling 处理器
+        self.function_handler = FunctionCallingHandler()
 
-    def _format_messages_to_prompt(self, messages: list) -> str:
+    def _format_messages_to_prompt(self, messages: list, functions: list = None, function_call: str = "auto") -> str:
         """
         将OpenAI格式的消息数组转换为单个提示词
+
+        参数:
+        - messages: OpenAI 格式的消息列表
+        - functions: 可用的函数定义列表
+        - function_call: 函数调用模式 ("auto", "none", "required", 或特定函数名)
 
         格式化策略：
         - system消息作为上下文说明
         - 对话历史按 "User: xxx\nAssistant: xxx" 格式组织
         - 最后一条用户消息单独列出
+        - 如果有 functions，添加 function calling 指令
         """
         prompt_parts = []
+
+        # 如果有 functions，先添加 function calling 指令
+        if functions:
+            function_prompt = self.function_handler.format_functions_to_prompt(functions, function_call)
+            if function_prompt:
+                prompt_parts.append(function_prompt)
 
         # 提取system消息
         system_messages = []
@@ -401,19 +416,30 @@ class GeminiClientCDP:
                     traceback.print_exc()
                 await asyncio.sleep(config.DOM_POLL_INTERVAL)
 
-    async def send_message(self, messages: list, model: str = "gemini-pro") -> AsyncGenerator[str, None]:
+    async def send_message(self, messages: list, model: str = "gemini-pro", **kwargs) -> AsyncGenerator[str, None]:
         """
         发送消息到 Gemini 并流式返回响应
         在已有页面中发送消息，保持对话连续性
+
+        参数:
+        - messages: 消息列表
+        - model: 模型名称
+        - **kwargs: 额外参数，包括 functions, function_call 等
         """
         if not self.is_initialized:
             await self.initialize()
 
-        # 格式化对话历史为单个提示词
-        formatted_prompt = self._format_messages_to_prompt(messages)
+        # 提取 function calling 相关参数
+        functions = kwargs.get('functions', None)
+        function_call = kwargs.get('function_call', 'auto')
+
+        # 格式化对话历史为单个提示词，包含 function calling 指令
+        formatted_prompt = self._format_messages_to_prompt(messages, functions, function_call)
 
         print(f"📝 发送消息 ({len(messages)} 条对话历史)")
         print(f"   格式化后的提示词: {formatted_prompt[:100]}...")
+        if functions:
+            print(f"   包含 {len(functions)} 个可用函数")
 
         # 清空之前的响应块
         self._response_chunks = []
