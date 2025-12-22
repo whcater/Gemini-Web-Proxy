@@ -84,7 +84,20 @@ class GeminiClientCDP:
                 if last_user_message:
                     conversation_history.append(f"User: {last_user_message}")
                     last_user_message = None
-                conversation_history.append(f"Assistant: {content}")
+                # 处理 assistant 的响应
+                if msg.get('function_call'):
+                    # 如果是函数调用，显示函数调用信息
+                    func_call = msg['function_call']
+                    func_name = func_call.get('name', 'unknown')
+                    func_args = func_call.get('arguments', '{}')
+                    conversation_history.append(f"Assistant: [Called function: {func_name} with arguments: {func_args}]")
+                elif content:
+                    # 如果有文本内容，显示文本
+                    conversation_history.append(f"Assistant: {content}")
+            elif role == 'function':
+                # 处理函数执行结果
+                func_name = msg.get('name', 'unknown_function')
+                conversation_history.append(f"Function [{func_name}] Result: {content}")
 
         # 添加对话历史
         if conversation_history:
