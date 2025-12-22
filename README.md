@@ -12,10 +12,14 @@
 
 ## 📋 前置要求
 
-1. **Python 3.8+**
+1. **Python 3.11 或 3.12** （推荐使用 uv 管理 Python 版本，详见 [环境配置指南](ENVIRONMENT_SETUP.md)）
 2. **Google Chrome 浏览器** 已安装并登录 Gemini Pro
 
+> ⚠️ **重要**：不支持 Python 3.14+，某些依赖尚未完全兼容。如果遇到 `greenlet` 编译错误，请参考 [环境配置指南](ENVIRONMENT_SETUP.md)。
+
 ## 🔧 安装步骤
+
+> 💡 **推荐**：使用 [uv](ENVIRONMENT_SETUP.md) 管理 Python 版本和依赖，速度更快且避免版本问题。
 
 ### 1. 克隆或下载项目
 
@@ -24,6 +28,25 @@ cd gemini-proxy
 ```
 
 ### 2. 安装依赖
+
+**使用 uv（推荐）：**
+
+```bash
+# 安装 Python 3.12（如果未安装）
+uv python install 3.12
+
+# 创建虚拟环境
+uv venv --python 3.12
+
+# 激活虚拟环境
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # macOS/Linux
+
+# 安装依赖
+uv pip install -r requirements.txt
+```
+
+**使用 pip（传统方式）：**
 
 ```bash
 pip install -r requirements.txt
@@ -220,31 +243,9 @@ A: 可以，但需要在服务器上安装图形界面或使用 Xvfb。
 
 有问题？欢迎提 Issue！
 
-
-
-
 ---
 
-# 退出当前虚拟环境
-deactivate
+## 📚 相关文档
 
-# 安装 Python 3.12
-brew install python@3.12
-
-# 删除旧的虚拟环境
-rm -rf venv
-
-# 使用 Python 3.12 创建新的虚拟环境
-/usr/local/opt/python@3.12/bin/python3.12 -m venv venv
-
-# 激活虚拟环境
-source venv/bin/activate
-
-# 确认 Python 版本
-python --version  # 应该显示 Python 3.12.x
-
-# 安装依赖
-pip install -r requirements.txt
-
-
-CHROME_USER_DATA = "/Users/ylp/Library/Application Support/Google/Chrome"
+- [环境配置指南 (ENVIRONMENT_SETUP.md)](ENVIRONMENT_SETUP.md) - 详细的 Python 版本管理和 uv 使用教程
+- [Function Calling 文档 (FUNCTION_CALLING_README.md)](FUNCTION_CALLING_README.md) - OpenAI Function Calling 功能说明
