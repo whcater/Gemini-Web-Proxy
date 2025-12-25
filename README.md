@@ -19,17 +19,28 @@
 
 ## 🔧 安装步骤
 
-> 💡 **推荐**：使用 [uv](ENVIRONMENT_SETUP.md) 管理 Python 版本和依赖，速度更快且避免版本问题。
+> 💡 **推荐**：使用跨平台 Node.js 脚本，一键完成所有配置！
 
-### 1. 克隆或下载项目
+### 方式 1：使用 Node.js 脚本（推荐）
+
+**前置要求**：安装 [Node.js 14+](https://nodejs.org/)
 
 ```bash
+# 1. 克隆或下载项目
 cd gemini-proxy
+
+# 2. 一键配置环境（自动安装 uv、Python 3.12、依赖等）
+npm run setup
+
+# 3. 启动服务
+npm start
 ```
 
-### 2. 安装依赖
+就这么简单！脚本会自动处理 Windows/macOS/Linux 的所有差异。
 
-**使用 uv（推荐）：**
+---
+
+### 方式 2：使用 uv（手动配置）
 
 ```bash
 # 安装 Python 3.12（如果未安装）
@@ -46,7 +57,7 @@ source .venv/bin/activate  # macOS/Linux
 uv pip install -r requirements.txt
 ```
 
-**使用 pip（传统方式）：**
+### 方式 3：使用 pip（传统方式）
 
 ```bash
 pip install -r requirements.txt
@@ -107,7 +118,28 @@ python main.py
 
 ### 一键启动
 
-运行 run.bat/run.sh 文件，其会自动安装需求，并启动反代
+```bash
+# 使用 Node.js 脚本（推荐，跨平台）
+npm start
+
+# 或使用系统脚本
+run.bat      # Windows
+./run.sh     # macOS/Linux
+```
+
+### 启动 Chrome CDP 模式（可选）
+
+如果需要使用 CDP 协议连接 Chrome：
+
+```bash
+# 使用 Node.js 脚本（推荐，跨平台）
+npm run start-chrome        # 普通模式
+npm run start-chrome-cdp    # CDP 无痕模式
+
+# 或使用系统脚本
+./start_chrome_cdp.sh      # macOS/Linux
+# Windows 用户请使用 npm run start-chrome-cdp
+```
 
 ### 在你需要LLM的程序中配置
 
@@ -248,4 +280,5 @@ A: 可以，但需要在服务器上安装图形界面或使用 Xvfb。
 ## 📚 相关文档
 
 - [环境配置指南 (ENVIRONMENT_SETUP.md)](ENVIRONMENT_SETUP.md) - 详细的 Python 版本管理和 uv 使用教程
+- [Node.js 脚本说明 (SCRIPTS_README.md)](SCRIPTS_README.md) - 跨平台脚本的详细使用说明
 - [Function Calling 文档 (FUNCTION_CALLING_README.md)](FUNCTION_CALLING_README.md) - OpenAI Function Calling 功能说明

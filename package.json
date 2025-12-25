@@ -1,0 +1,24 @@
+{
+  "name": "gemini-web-proxy",
+  "version": "1.0.0",
+  "description": "Gemini to OpenAI API Proxy - 跨平台脚本管理",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "start": "node scripts/run.js",
+    "start-chrome": "node scripts/start-chrome.js",
+    "start-chrome-cdp": "node scripts/start-chrome.js --cdp",
+    "test": "python test_api.py"
+  },
+  "keywords": [
+    "gemini",
+    "openai",
+    "proxy",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -2,6 +2,26 @@
 
 本文档详细说明如何使用 `uv` 工具管理 Python 版本和项目环境。
 
+## 🚀 快速开始（推荐）
+
+如果你已经安装了 **Node.js**，可以使用我们提供的跨平台脚本，一键完成所有配置：
+
+```bash
+# 一键配置环境（安装 uv、Python 3.12、创建虚拟环境、安装依赖）
+npm run setup
+
+# 启动 Chrome CDP（可选）
+npm run start-chrome        # 普通模式
+npm run start-chrome-cdp    # CDP 无痕模式
+
+# 启动服务
+npm start
+```
+
+这些脚本会自动处理 Windows、macOS、Linux 的差异，无需手动执行不同的命令。
+
+---
+
 ## 为什么使用 uv？
 
 `uv` 是一个极速的 Python 包管理器和环境管理工具，相比传统的 pip + venv 方案有以下优势：
@@ -16,6 +36,31 @@
 本项目推荐使用 **Python 3.11** 或 **Python 3.12**。
 
 **不支持 Python 3.14+**，因为某些依赖（如 greenlet）尚未完全支持新版本的内部 API。
+
+---
+
+## 配置方式选择
+
+### 方式 1：使用 Node.js 脚本（推荐）
+
+**优点**：
+- ✅ 跨平台统一命令
+- ✅ 自动处理系统差异
+- ✅ 更简洁易用
+- ✅ 无需维护多个 .sh/.bat 文件
+
+**前置要求**：安装 Node.js 14+ ([下载地址](https://nodejs.org/))
+
+**使用方法**：
+```bash
+npm run setup          # 配置环境
+npm run start-chrome   # 启动 Chrome（可选）
+npm start              # 启动服务
+```
+
+### 方式 2：手动配置
+
+如果你不想安装 Node.js，可以按照下面的操作系统特定指南手动配置。
 
 ---
 
