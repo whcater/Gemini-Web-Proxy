@@ -9,7 +9,7 @@ import time
 import threading
 from typing import AsyncGenerator
 import config
-from gemini_client_cdp_full import get_client
+from gemini_client_cdp_full import get_client, reset_client
 from parser import GeminiResponseParser
 from function_calling import FunctionCallingHandler
 
@@ -364,6 +364,74 @@ def health():
     return jsonify({"status": "ok"})
 
 
+@app.route('/cdp/status', methods=['GET'])
+def cdp_status():
+    """
+    检查 CDP 连接状态
+    返回详细的连接信息
+    """
+    async def check_status():
+        try:
+            client = await get_client()
+            is_healthy = await client.is_healthy()
+            return {
+                "status": "healthy" if is_healthy else "unhealthy",
+                "is_initialized": client.is_initialized,
+                "has_page": client.page is not None,
+                "has_browser": client.browser is not None,
+                "message": "CDP 连接正常" if is_healthy else "CDP 连接异常，下次请求将自动重连"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "is_initialized": False,
+                "has_page": False,
+                "has_browser": False,
+                "message": f"检查状态时出错: {str(e)}"
+            }
+
+    try:
+        result = run_async(check_status())
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@app.route('/cdp/reset', methods=['POST'])
+def cdp_reset():
+    """
+    强制重置 CDP 连接
+    用于手动触发重连
+    """
+    async def do_reset():
+        try:
+            await reset_client()
+            # 重新获取客户端（会自动重新初始化）
+            client = await get_client()
+            is_healthy = await client.is_healthy()
+            return {
+                "status": "success" if is_healthy else "warning",
+                "message": "CDP 连接已重置并重新连接" if is_healthy else "CDP 已重置但连接可能不健康"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"重置失败: {str(e)}"
+            }
+
+    try:
+        result = run_async(do_reset())
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 @app.route('/', methods=['GET'])
 def index():
     """首页"""
@@ -384,6 +452,15 @@ Model: gemini-pro
         <pre>
 curl http://127.0.0.1:5000/v1/models
         </pre>
+        <h2>CDP 管理接口：</h2>
+        <pre>
+# 检查 CDP 连接状态
+curl http://127.0.0.1:5000/cdp/status
+
+# 强制重置 CDP 连接
+curl -X POST http://127.0.0.1:5000/cdp/reset
+        </pre>
+        <p><small>💡 CDP 连接会自动检测断开并重连，通常无需手动重置</small></p>
     </body>
     </html>
     """

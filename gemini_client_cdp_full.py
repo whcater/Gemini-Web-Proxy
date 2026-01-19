@@ -36,6 +36,93 @@ class GeminiClientCDP:
         self.html_converter.ignore_emphasis = False  # 保留强调（加粗、斜体）
         # Function Calling 处理器
         self.function_handler = FunctionCallingHandler()
+        # 重连相关配置
+        self._max_reconnect_attempts = 3
+        self._reconnect_delay = 2  # 秒
+
+    async def is_healthy(self) -> bool:
+        """
+        检查 CDP 连接是否健康
+        返回 True 表示连接正常，False 表示需要重连
+        """
+        if not self.is_initialized:
+            return False
+
+        if not self.page:
+            return False
+
+        try:
+            # 尝试执行一个简单的操作来检测连接是否有效
+            await self.page.evaluate('() => true')
+            return True
+        except Exception as e:
+            print(f"⚠️ 健康检查失败: {e}")
+            return False
+
+    async def reset(self):
+        """
+        重置客户端状态，准备重新连接
+        """
+        print("🔄 重置 CDP 客户端状态...")
+
+        # 尝试清理现有连接
+        try:
+            if self.browser:
+                await self.browser.close()
+        except Exception as e:
+            print(f"⚠️ 关闭浏览器连接时出错: {e}")
+
+        try:
+            if self.playwright:
+                await self.playwright.stop()
+        except Exception as e:
+            print(f"⚠️ 停止 Playwright 时出错: {e}")
+
+        # 重置所有状态
+        self.playwright = None
+        self.browser = None
+        self.context = None
+        self.page = None
+        self.is_initialized = False
+        self._response_chunks = []
+        self._response_complete = False
+
+        print("✅ 客户端状态已重置")
+
+    async def reconnect(self) -> bool:
+        """
+        尝试重新连接到 CDP
+        返回 True 表示重连成功，False 表示失败
+        """
+        print("🔄 尝试重新连接 CDP...")
+
+        for attempt in range(1, self._max_reconnect_attempts + 1):
+            try:
+                print(f"   第 {attempt}/{self._max_reconnect_attempts} 次尝试...")
+
+                # 重置状态
+                await self.reset()
+
+                # 等待一段时间再重连
+                await asyncio.sleep(self._reconnect_delay)
+
+                # 尝试初始化
+                await self.initialize()
+
+                # 验证连接
+                if await self.is_healthy():
+                    print(f"✅ 重连成功！(第 {attempt} 次尝试)")
+                    return True
+
+            except Exception as e:
+                print(f"   第 {attempt} 次重连失败: {e}")
+                if attempt < self._max_reconnect_attempts:
+                    wait_time = self._reconnect_delay * attempt
+                    print(f"   等待 {wait_time} 秒后重试...")
+                    await asyncio.sleep(wait_time)
+
+        print(f"❌ 重连失败，已尝试 {self._max_reconnect_attempts} 次")
+        return False
 
     def _format_messages_to_prompt(self, messages: list, functions: list = None, function_call: str = "auto") -> str:
         """
@@ -446,6 +533,12 @@ class GeminiClientCDP:
         if not self.is_initialized:
             await self.initialize()
 
+        # 健康检查：如果连接已断开，尝试重连
+        if not await self.is_healthy():
+            print("⚠️ 发送消息前检测到连接异常，尝试重连...")
+            if not await self.reconnect():
+                raise ConnectionError("CDP 连接已断开且重连失败，请检查 Chrome 是否正常运行")
+
         # 提取 function calling 相关参数
         functions = kwargs.get('functions', None)
         function_call = kwargs.get('function_call', 'auto')
@@ -579,7 +672,26 @@ class GeminiClientCDP:
                     yield {"content": f"\n\n{timeout_message}"}
 
         except Exception as e:
+            error_str = str(e)
             print(f"❌ 发送消息失败: {e}")
+
+            # 检测是否为连接断开错误
+            connection_errors = [
+                "Target page, context or browser has been closed",
+                "TargetClosedError",
+                "Connection closed",
+                "Browser has been disconnected",
+                "Page has been closed",
+                "Context has been closed"
+            ]
+
+            is_connection_error = any(err in error_str for err in connection_errors)
+
+            if is_connection_error:
+                # 标记连接已断开，下次调用 get_client 会自动重连
+                self.is_initialized = False
+                print("⚠️ 检测到连接断开错误，已标记客户端需要重连")
+
             raise
 
     async def close(self):
@@ -594,11 +706,47 @@ class GeminiClientCDP:
 
 # 全局客户端实例（单例模式）
 _client = None
+_client_lock = asyncio.Lock()
 
 async def get_client() -> GeminiClientCDP:
-    """获取全局客户端实例"""
+    """
+    获取全局客户端实例
+    包含健康检查和自动重连功能
+    """
     global _client
-    if _client is None:
-        _client = GeminiClientCDP()
-        await _client.initialize()
-    return _client
+
+    async with _client_lock:
+        # 如果客户端不存在，创建新实例
+        if _client is None:
+            print("🆕 创建新的 CDP 客户端...")
+            _client = GeminiClientCDP()
+            await _client.initialize()
+            return _client
+
+        # 检查现有客户端是否健康
+        if not await _client.is_healthy():
+            print("⚠️ 检测到 CDP 连接断开，尝试重新连接...")
+
+            # 尝试重连
+            if await _client.reconnect():
+                print("✅ CDP 重连成功")
+            else:
+                # 重连失败，创建新实例
+                print("⚠️ 重连失败，创建新的客户端实例...")
+                _client = GeminiClientCDP()
+                await _client.initialize()
+
+        return _client
+
+
+async def reset_client():
+    """
+    强制重置客户端（供外部调用）
+    """
+    global _client
+
+    async with _client_lock:
+        if _client is not None:
+            await _client.reset()
+            _client = None
+            print("✅ 客户端已强制重置")

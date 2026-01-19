@@ -4,9 +4,8 @@
   "description": "Gemini to OpenAI API Proxy - 跨平台脚本管理",
   "scripts": {
     "setup": "node scripts/setup.js",
-    "start": "node scripts/run.js",
-    "start-chrome": "node scripts/start-chrome.js",
     "start-chrome-cdp": "node scripts/start-chrome.js --cdp",
+    "start": "node scripts/run.js", 
     "test": "python test_api.py"
   },
   "keywords": [
