@@ -45,8 +45,8 @@ async function main() {
   try {
     // 步骤 1: 关闭现有 Chrome 进程
     console.log('[1/4] 关闭现有 Chrome 进程...');
-    killChromeProcesses();
-    await sleep(2000);
+    // killChromeProcesses();
+    // await sleep(2000);
     console.log('');
 
     // 步骤 2: 准备启动参数
