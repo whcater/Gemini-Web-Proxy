@@ -2,8 +2,12 @@
 Gemini 浏览器自动化客户端 - CDP完整版本
 连接到已运行的 Chrome 实例，保持登录状态，具备完整功能
 """
+import os
 import asyncio
 import time
+
+# 确保本地 CDP 连接不走代理
+os.environ.setdefault('NO_PROXY', '127.0.0.1,localhost')
 from typing import AsyncGenerator, Optional, Dict, Any
 from playwright.async_api import async_playwright, Page, Browser, BrowserContext
 import config
